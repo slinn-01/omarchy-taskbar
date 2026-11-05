@@ -209,6 +209,7 @@ Item {
       out.push({
         monitor: bars[i].monitorName,
         state: bars[i].visibilityState,
+        exclusiveZone: bars[i].exclusiveZone,
         rows: bars[i].rows.map(function(row) {
           return { group: row.groupLabel, title: row.title, appId: row.appId, focused: row.focused, activeGroup: row.activeGroup }
         })

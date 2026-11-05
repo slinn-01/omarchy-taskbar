@@ -74,10 +74,11 @@ PanelWindow {
   WlrLayershell.layer: WlrLayer.Top
   WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
-  // Reserves its strip only while pinned in view. Normal exclusion keeps it
-  // clear of anything already reserved at the bottom, such as the bar.
+  // Reserves its strip while pinned in view, only the edge trigger while
+  // auto-hidden. Normal exclusion keeps it clear of anything already
+  // reserved at the bottom, such as the bar.
   exclusionMode: window.parked ? ExclusionMode.Ignore : ExclusionMode.Normal
-  exclusiveZone: Model.exclusiveZone(hideState, rowHeight)
+  exclusiveZone: Model.exclusiveZone(hideState, rowHeight, edgeTrigger.height)
 
   anchors {
     bottom: true

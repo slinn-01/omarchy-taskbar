@@ -328,11 +328,16 @@ function visibility(state) {
   return "shown"
 }
 
-// Space reserved for the bar: only while it is pinned in view. Auto-hide
-// overlays windows instead of pushing them around.
-function exclusiveZone(state, height) {
+// Space reserved for the bar. Pinned in view, its full height. With
+// auto-hide, only the edge strip that reveals it: the bar overlays windows
+// when it comes up instead of pushing them around. (Quickshell reads a zone
+// of 0 as "size it automatically", so the strip also keeps the surface from
+// reserving its whole height.) Hidden, nothing: the window then ignores
+// exclusion altogether.
+function exclusiveZone(state, height, edge) {
   var s = state || {}
-  return !s.manuallyHidden && !s.fullscreen && !s.autohide ? height : 0
+  if (s.manuallyHidden || s.fullscreen) return 0
+  return s.autohide ? Math.max(1, edge || 1) : height
 }
 
 if (typeof module !== "undefined") {

@@ -249,11 +249,14 @@ test("hide states combine: hidden beats tucked beats shown", () => {
   assert.equal(M.visibility({ manuallyHidden: true, revealed: true }), "hidden")
 })
 
-test("space is reserved only while pinned in view", () => {
-  assert.equal(M.exclusiveZone({}, 26), 26)
-  assert.equal(M.exclusiveZone({ autohide: true, revealed: true }, 26), 0)
-  assert.equal(M.exclusiveZone({ manuallyHidden: true }, 26), 0)
-  assert.equal(M.exclusiveZone({ fullscreen: true }, 26), 0)
+test("full height is reserved while pinned, the edge strip while auto-hidden, nothing while hidden", () => {
+  assert.equal(M.exclusiveZone({}, 26, 2), 26)
+  assert.equal(M.exclusiveZone({ autohide: true }, 26, 2), 2)
+  assert.equal(M.exclusiveZone({ autohide: true, revealed: true }, 26, 2), 2)
+  // Never 0 while exclusion applies: Quickshell treats 0 as automatic sizing.
+  assert.equal(M.exclusiveZone({ autohide: true }, 26, 0), 1)
+  assert.equal(M.exclusiveZone({ manuallyHidden: true }, 26, 2), 0)
+  assert.equal(M.exclusiveZone({ fullscreen: true, autohide: true }, 26, 2), 0)
 })
 
 test("web app windows fall back to their browser", () => {
