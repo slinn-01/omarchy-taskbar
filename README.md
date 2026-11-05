@@ -27,7 +27,7 @@ omarchy plugin add https://github.com/slinn-01/omarchy-taskbar --enable
 Or, from a local checkout:
 
 ```sh
-scripts/dev-install.sh --enable
+scripts/dev-sync.sh --enable
 ```
 
 ## Turn it on and off
@@ -39,6 +39,28 @@ leaves the rest of the desktop untouched:
 omarchy plugin disable io.github.slinn-01.taskbar   # gone, windows get the space back
 omarchy plugin enable  io.github.slinn-01.taskbar   # back again
 ```
+
+## Remove
+
+```sh
+omarchy plugin disable io.github.slinn-01.taskbar
+omarchy plugin remove io.github.slinn-01.taskbar
+```
+
+This deletes only the plugin's own folder under `~/.config/omarchy/plugins/`
+and its entry in `shell.json`. No other configuration is touched; the
+plugin never writes to your config, and it keeps no state or cache files.
+
+## Dependencies
+
+There are no extra packages. The plugin uses only the following, which an
+Omarchy system already has:
+
+- Omarchy Quattro's shell plugin system (`omarchy-shell`, Quickshell)
+- Hyprland
+- `hyprctl` and `bash`, to run Hyprland dispatches
+
+It does not use the network.
 
 ## Hide and show
 
@@ -107,8 +129,8 @@ each screen's bar is currently listing.
 ```sh
 node --test tests/                     # model unit tests
 omarchy plugin validate .              # manifest check
-scripts/dev-install.sh --enable        # copy into ~/.config/omarchy/plugins and enable
-scripts/dev-install.sh --restart       # update an installed copy, then restart the shell
+scripts/dev-sync.sh --enable        # copy into ~/.config/omarchy/plugins and enable
+scripts/dev-sync.sh --restart       # update an installed copy, then restart the shell
 ```
 
 When the shell hot-reloads an already-loaded service plugin, it uses the

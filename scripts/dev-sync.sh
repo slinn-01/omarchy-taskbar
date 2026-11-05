@@ -7,7 +7,7 @@
 # directory (the watcher ignores hidden dirs), validate again, then swap it
 # into place with one rename.
 #
-# Usage: scripts/dev-install.sh [--enable] [--restart]
+# Usage: scripts/dev-sync.sh [--enable] [--restart]
 #
 # --restart restarts the Omarchy shell afterwards. The shell's hot reload
 # re-creates the service but from its cached QML component, so changes to an
