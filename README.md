@@ -1,4 +1,4 @@
-# Omarchy Taskbar
+# Workspace Taskbar
 
 A slim taskbar along the bottom of the screen for [Omarchy](https://omarchy.org)
 that shows **every open window on every workspace**, grouped by workspace.
