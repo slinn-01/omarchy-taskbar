@@ -125,10 +125,23 @@ Item {
     return id ? DesktopEntries.byId(id) : null
   }
 
+  // The entry for the window's app, else for the browser hosting it as a web
+  // app, for its icon.
+  function iconEntryForAppId(appId) {
+    var entry = root.entryForAppId(appId)
+    if (entry) return entry
+    var browsers = Model.webAppBrowserIds(appId)
+    for (var i = 0; i < browsers.length; i++) {
+      entry = DesktopEntries.heuristicLookup(browsers[i])
+      if (entry) return entry
+    }
+    return null
+  }
+
   readonly property string fallbackIcon: Quickshell.iconPath("application-x-executable", true)
 
   function iconSource(appId) {
-    var entry = root.entryForAppId(appId)
+    var entry = root.iconEntryForAppId(appId)
     var icon = entry && entry.icon ? entry.icon : String(appId || "")
     switch (Model.iconKind(icon)) {
     case "url": return icon

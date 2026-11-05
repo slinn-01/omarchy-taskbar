@@ -7,7 +7,11 @@
 # directory (the watcher ignores hidden dirs), validate again, then swap it
 # into place with one rename.
 #
-# Usage: scripts/dev-install.sh [--enable]
+# Usage: scripts/dev-install.sh [--enable] [--restart]
+#
+# --restart restarts the Omarchy shell afterwards. The shell's hot reload
+# re-creates the service but from its cached QML component, so changes to an
+# already-loaded plugin only show after a restart.
 set -euo pipefail
 
 ID="io.github.slinn-01.taskbar"
@@ -33,14 +37,32 @@ mv "$STAGING" "$DEST"
 rm -rf "$OLD"
 echo "Installed $ID -> $DEST"
 
-# The shell must know the plugin before it can be enabled; the file watcher
-# picks it up after a debounce, so ask for the rescan directly as well.
-omarchy-shell -q shell rescanPlugins || true
+known() { omarchy plugin list --json 2>/dev/null | grep -q "\"$ID\""; }
 
-if [[ ${1:-} == "--enable" ]]; then
+# An update is picked up by the shell's file watcher, which reloads plugin
+# code by itself; a rescan on top of it races that reload. A first install
+# needs the shell to know the plugin before it can be enabled.
+if ! known; then
+  omarchy-shell -q shell rescanPlugins || true
+fi
+
+enable=false restart=false
+for arg in "$@"; do
+  case $arg in
+    --enable) enable=true ;;
+    --restart) restart=true ;;
+    *) echo "unknown option: $arg" >&2; exit 2 ;;
+  esac
+done
+
+if $enable; then
   for _ in 1 2 3 4 5 6 7 8 9 10; do
-    omarchy plugin list --json 2>/dev/null | grep -q "\"$ID\"" && break
+    known && break
     sleep 0.3
   done
   omarchy plugin enable "$ID"
+fi
+
+if $restart; then
+  omarchy restart shell
 fi

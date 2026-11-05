@@ -255,3 +255,11 @@ test("space is reserved only while pinned in view", () => {
   assert.equal(M.exclusiveZone({ manuallyHidden: true }, 26), 0)
   assert.equal(M.exclusiveZone({ fullscreen: true }, 26), 0)
 })
+
+test("web app windows fall back to their browser", () => {
+  assert.deepEqual(M.webAppBrowserIds("brave-outlook.office.com__mail_-Default"), ["brave-browser", "brave"])
+  assert.deepEqual(M.webAppBrowserIds("chrome-app.hey.com__-Profile_1"), ["chromium", "google-chrome"])
+  assert.deepEqual(M.webAppBrowserIds("brave-browser"), [])
+  assert.deepEqual(M.webAppBrowserIds("firefox"), [])
+  assert.deepEqual(M.webAppBrowserIds(""), [])
+})

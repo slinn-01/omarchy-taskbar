@@ -289,6 +289,22 @@ function claimingEntryId(appId, entries) {
   return ""
 }
 
+// A Chromium-family browser names an --app window's class after the browser
+// and the page, e.g. brave-outlook.office.com__mail_-Default. When no desktop
+// entry claims such a window, the browser's own icon is a better guess than
+// the generic one. Returns app ids to try, best first.
+var WEB_APP_BROWSERS = {
+  "brave": ["brave-browser", "brave"],
+  "chrome": ["chromium", "google-chrome"],
+  "msedge": ["microsoft-edge"],
+  "vivaldi": ["vivaldi-stable", "vivaldi"]
+}
+
+function webAppBrowserIds(appId) {
+  var match = /^([a-z]+)-.+__.*-(Default|Profile_\d+)$/.exec(String(appId || ""))
+  return match && WEB_APP_BROWSERS[match[1]] ? WEB_APP_BROWSERS[match[1]].slice() : []
+}
+
 // How an icon name from a desktop entry is turned into an image source:
 // "url" passes through, "file" is an absolute path, "theme" is a themed name,
 // and "fallback" means use the generic application icon.
@@ -341,6 +357,7 @@ if (typeof module !== "undefined") {
     safeMonitorName: safeMonitorName,
     workspaceCommand: workspaceCommand,
     claimingEntryId: claimingEntryId,
+    webAppBrowserIds: webAppBrowserIds,
     iconKind: iconKind,
     visibility: visibility,
     exclusiveZone: exclusiveZone
