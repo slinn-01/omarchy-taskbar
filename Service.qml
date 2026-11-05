@@ -185,6 +185,23 @@ Item {
     function show(): void { root.manuallyHidden = false }
     function hide(): void { root.manuallyHidden = true }
     function status(): string { return root.manuallyHidden ? "hidden" : "shown" }
+    // What each screen's bar lists, as JSON: for scripts and debugging.
+    function windows(): string { return root.describe() }
+  }
+
+  function describe() {
+    var bars = taskbars.instances
+    var out = []
+    for (var i = 0; i < bars.length; i++) {
+      out.push({
+        monitor: bars[i].monitorName,
+        state: bars[i].visibilityState,
+        rows: bars[i].rows.map(function(row) {
+          return { group: row.groupLabel, title: row.title, appId: row.appId, focused: row.focused, activeGroup: row.activeGroup }
+        })
+      })
+    }
+    return JSON.stringify(out)
   }
 
   // ---------------------------------------------------------------- hyprland
@@ -215,6 +232,7 @@ Item {
   }
 
   Variants {
+    id: taskbars
     model: Quickshell.screens
 
     delegate: Component {
