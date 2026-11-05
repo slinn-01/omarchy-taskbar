@@ -7,11 +7,7 @@ Click an icon to jump straight to that window, wherever it is.
 It's meant for anyone who loses track of what is open in a tiling window
 manager:
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│ 1 🦊 ▣ │ 3 💬 │ 5 ▣ ▣ 📁 │ S:scratch ▣ │ – 🎵                │
-└──────────────────────────────────────────────────────────────┘
-```
+![The taskbar: workspaces 1–9 with their windows' icons](preview.png)
 
 - Each workspace that has windows gets a small group: its number, then one
   icon per window.
@@ -103,6 +99,8 @@ each screen's bar is currently listing.
   has only been tried live on a single display.
 - If you move Omarchy's main bar to the bottom, the taskbar sits just above
   it.
+- Windows opened as a web app without a desktop entry show their browser's
+  icon.
 
 ## Development
 
@@ -110,7 +108,12 @@ each screen's bar is currently listing.
 node --test tests/                     # model unit tests
 omarchy plugin validate .              # manifest check
 scripts/dev-install.sh --enable        # copy into ~/.config/omarchy/plugins and enable
+scripts/dev-install.sh --restart       # update an installed copy, then restart the shell
 ```
+
+When the shell hot-reloads an already-loaded service plugin, it uses the
+cached QML component, so code changes only show up after
+`omarchy restart shell`. That's what `--restart` does.
 
 The code is laid out as follows:
 
