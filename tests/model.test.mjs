@@ -22,7 +22,7 @@ function win(address, workspaceId, extra = {}) {
   }
 }
 
-const ctx = (extra = {}) => ({ monitorName: "eDP-1", blocks: { "eDP-1": 0 }, allMonitors: false, activeWorkspaceIds: [1], ...extra })
+const ctx = (extra = {}) => ({ monitorName: "eDP-1", blocks: { "eDP-1": 0 }, allMonitors: false, activeWorkspaceNames: ["1"], ...extra })
 
 // ---------------------------------------------------------------- settings
 
@@ -144,7 +144,7 @@ test("each bar shows its own monitor's windows, plus every minimized window", ()
   const blocks = { "eDP-1": 0, "HDMI-A-1": 1 }
   const laptop = M.buildRows(windows, ctx({ blocks }))
   assert.deepEqual(laptop.map(r => r.address), ["0xa", "0xf0"])
-  const external = M.buildRows(windows, ctx({ monitorName: "HDMI-A-1", blocks, activeWorkspaceIds: [11] }))
+  const external = M.buildRows(windows, ctx({ monitorName: "HDMI-A-1", blocks, activeWorkspaceNames: ["11"] }))
   assert.deepEqual(external.map(r => r.address), ["0xb", "0xf0"])
   assert.equal(external[0].groupLabel, "1")
   assert.equal(external[0].activeGroup, true)
@@ -193,11 +193,13 @@ test("clicking a window focuses it by address", () => {
 })
 
 test("clicking a minimized window restores it to the given workspace first", () => {
-  const cmd = M.focusCommands({ address: "0xabc", minimized: true }, 3)
+  const cmd = M.focusCommands({ address: "0xabc", minimized: true }, { id: 3, name: "3" })
   assert.match(cmd.steps[1], /hl\.dsp\.window\.move\(\{ workspace = "3", window = "address:0xabc" \}\)/)
   assert.match(cmd.steps[2], /hl\.dsp\.focus/)
   assert.equal(cmd.after.length, 1)
-  assert.equal(M.focusCommands({ address: "0xabc", minimized: true }, -1), null)
+  assert.equal(M.focusCommands({ address: "0xabc", minimized: true }, { id: -1, name: "" }), null)
+  assert.equal(M.focusCommands({ address: "0xabc", minimized: true }, { id: -98, name: "special:scratchpad" }), null)
+  assert.equal(M.focusCommands({ address: "0xabc", minimized: true }, 3).steps.length, 4)
 })
 
 test("invalid addresses dispatch nothing", () => {
@@ -265,4 +267,38 @@ test("web app windows fall back to their browser", () => {
   assert.deepEqual(M.webAppBrowserIds("brave-browser"), [])
   assert.deepEqual(M.webAppBrowserIds("firefox"), [])
   assert.deepEqual(M.webAppBrowserIds(""), [])
+})
+
+// Hyprland 0.57 gives named workspaces no numeric id: they all share -1.
+test("named workspaces sharing id -1 are told apart by name", () => {
+  const rows = M.buildRows([
+    win("a1", -1, { workspaceName: "mail" }),
+    win("a2", -1, { workspaceName: "chat" }),
+    win("a3", 2)
+  ], ctx({ activeWorkspaceNames: ["mail"] }))
+  assert.deepEqual(rows.map(r => r.groupLabel), ["2", "chat", "mail"])
+  assert.deepEqual(rows.map(r => r.special), [false, false, false])
+  assert.deepEqual(rows.map(r => r.groupStart), [true, true, true])
+  assert.deepEqual(rows.map(r => r.activeGroup), [false, false, true])
+})
+
+test("minimized windows restore onto a named workspace by name", () => {
+  const cmd = M.focusCommands({ address: "0xabc", minimized: true }, { id: -1, name: "mail" })
+  assert.match(cmd.steps[1], /workspace = "name:mail"/)
+  assert.equal(M.focusCommands({ address: "0xabc", minimized: true }, { id: -1, name: 'x"); os.exit(' }), null)
+})
+
+test("workspace labels of named workspaces focus by name", () => {
+  assert.equal(M.workspaceCommand({ workspaceId: -1, workspaceName: "mail", monitorName: "eDP-1" }, {}), 'hl.dsp.focus({ workspace = "name:mail" })')
+  assert.equal(M.workspaceCommand({ workspaceId: -1, workspaceName: 'a"b', monitorName: "eDP-1" }, {}), null)
+})
+
+test("workspace names are only accepted when safe inside a Lua string", () => {
+  assert.equal(M.safeWorkspaceName("my work (2)"), "my work (2)")
+  assert.equal(M.safeWorkspaceName('a"b'), "")
+  assert.equal(M.safeWorkspaceName("a\\b"), "")
+  assert.equal(M.safeWorkspaceName("line\nbreak"), "")
+  assert.equal(M.safeWorkspaceName(""), "")
+  assert.equal(M.workspaceSelector({ id: 4, name: "4" }), "4")
+  assert.equal(M.workspaceSelector({ id: -98, name: "special:x" }), "")
 })

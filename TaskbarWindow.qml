@@ -18,7 +18,13 @@ PanelWindow {
   readonly property var settings: taskbar ? taskbar.settings : Model.normalizeSettings({})
   readonly property var monitor: Hyprland.monitorFor(screen)
   readonly property string monitorName: monitor ? monitor.name : ""
-  readonly property int activeWorkspaceId: monitor && monitor.activeWorkspace ? monitor.activeWorkspace.id : -1
+  readonly property var activeWorkspace: monitor ? monitor.activeWorkspace : null
+  readonly property int activeWorkspaceId: activeWorkspace ? activeWorkspace.id : -1
+  // Where a minimized window comes back to: the workspace this screen shows.
+  readonly property var restoreWorkspace: ({
+    id: window.activeWorkspaceId,
+    name: window.activeWorkspace ? window.activeWorkspace.name : ""
+  })
 
   // ---------------------------------------------------------------- sizing
 
@@ -47,7 +53,8 @@ PanelWindow {
       var toplevel = toplevels[i]
       var workspace = toplevel ? toplevel.workspace : null
       if (!workspace) continue
-      var shown = workspace.id === window.activeWorkspaceId
+      // Compared as objects: named and special workspaces can share an id.
+      var shown = workspace === window.activeWorkspace
         || (window.specialWorkspaceName !== "" && workspace.name === window.specialWorkspaceName)
       if (!shown) continue
       var ipc = toplevel.lastIpcObject
@@ -101,7 +108,7 @@ PanelWindow {
     monitorName: window.monitorName,
     blocks: taskbar ? taskbar.blocks : ({}),
     allMonitors: window.settings.allMonitors,
-    activeWorkspaceIds: taskbar ? taskbar.activeWorkspaceIds : []
+    activeWorkspaceNames: taskbar ? taskbar.activeWorkspaceNames : []
   })
 
   // Delegates follow this model, keyed by window address, so a title or
@@ -328,7 +335,7 @@ PanelWindow {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: if (window.taskbar) window.taskbar.focusWorkspace(slot.row, window.activeWorkspaceId)
+            onClicked: if (window.taskbar) window.taskbar.focusWorkspace(slot.row, window.restoreWorkspace)
             onContainsMouseChanged: {
               if (containsMouse) window.showTooltip(labelMouse, window.workspaceText(slot.row))
               else window.hideTooltip(labelMouse)
@@ -390,7 +397,7 @@ PanelWindow {
             onClicked: function(mouse) {
               if (!window.taskbar) return
               if (mouse.button === Qt.MiddleButton) window.taskbar.closeWindow(slot.row)
-              else window.taskbar.focusWindow(slot.row, window.activeWorkspaceId)
+              else window.taskbar.focusWindow(slot.row, window.restoreWorkspace)
             }
             onContainsMouseChanged: {
               if (containsMouse) window.showTooltip(iconMouse, window.tooltipFor(slot.row))

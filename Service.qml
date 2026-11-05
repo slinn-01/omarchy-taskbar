@@ -64,14 +64,15 @@ Item {
     onLoadFailed: root.blocks = ({})
   }
 
-  // The workspace each monitor shows.
-  readonly property var activeWorkspaceIds: {
-    var ids = []
+  // The workspace each monitor shows, by name: named workspaces share an
+  // id of -1, names are unique.
+  readonly property var activeWorkspaceNames: {
+    var names = []
     var monitors = Hyprland.monitors.values
     for (var i = 0; i < monitors.length; i++) {
-      if (monitors[i].activeWorkspace) ids.push(monitors[i].activeWorkspace.id)
+      if (monitors[i].activeWorkspace) names.push(monitors[i].activeWorkspace.name)
     }
-    return ids
+    return names
   }
 
   // ---------------------------------------------------------------- windows
@@ -170,8 +171,8 @@ Item {
 
   // Brings a window forward and focuses it, switching to its workspace. A
   // minimized one comes back to the workspace the clicked bar's monitor shows.
-  function focusWindow(row, restoreWorkspaceId) {
-    var commands = Model.focusCommands(row, restoreWorkspaceId)
+  function focusWindow(row, restoreWorkspace) {
+    var commands = Model.focusCommands(row, restoreWorkspace)
     if (commands) root.run(commands.steps, commands.after)
   }
 
@@ -180,10 +181,10 @@ Item {
     if (command) root.run([command])
   }
 
-  function focusWorkspace(row, restoreWorkspaceId) {
+  function focusWorkspace(row, restoreWorkspace) {
     var command = Model.workspaceCommand(row, root.blocks)
     if (command) root.run([command])
-    else root.focusWindow(row, restoreWorkspaceId)
+    else root.focusWindow(row, restoreWorkspace)
   }
 
   // ---------------------------------------------------------------- hiding
