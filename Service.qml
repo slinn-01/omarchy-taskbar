@@ -20,8 +20,8 @@ Item {
 
   readonly property string pluginId: manifest && manifest.id ? manifest.id : Model.PLUGIN_ID
 
-  Commons.Translations { id: strings; directory: Qt.resolvedUrl("i18n") }
-  readonly property alias strings: strings
+  Commons.Translations { id: catalog; directory: Qt.resolvedUrl("i18n") }
+  readonly property var strings: catalog
 
   // ---------------------------------------------------------------- settings
 
@@ -218,7 +218,9 @@ Item {
       }
       // A switch is credited to the focused monitor; moving or renumbering
       // workspaces is only learned by asking.
-      if (name === "workspacev2" || name === "moveworkspacev2" || name === "changeworkspaceid") {
+      // The special workspace a monitor shows is only in its IPC data.
+      if (name === "workspacev2" || name === "moveworkspacev2" || name === "changeworkspaceid"
+        || name === "activespecial" || name === "activespecialv2") {
         Hyprland.refreshMonitors()
         Hyprland.refreshWorkspaces()
       }

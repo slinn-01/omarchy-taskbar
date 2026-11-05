@@ -30,13 +30,26 @@ PanelWindow {
 
   // ---------------------------------------------------------------- hiding
 
-  // A real fullscreen window on this screen (bit 2; 1 is maximized) hides the
-  // bar, edge trigger and all.
+  // The special workspace shown over this monitor's own, if any (Hyprland
+  // only reports it in the monitor's IPC data).
+  readonly property string specialWorkspaceName: {
+    var ipc = monitor ? monitor.lastIpcObject : null
+    var special = ipc ? ipc.specialWorkspace : null
+    return special && special.name ? String(special.name) : ""
+  }
+
+  // A real fullscreen window on this screen (bit 2; 1 is maximized), on its
+  // workspace or a special workspace shown over it, hides the bar, edge
+  // trigger and all.
   readonly property bool fullscreen: {
     var toplevels = Hyprland.toplevels.values
     for (var i = 0; i < toplevels.length; i++) {
       var toplevel = toplevels[i]
-      if (!toplevel || !toplevel.workspace || toplevel.workspace.id !== window.activeWorkspaceId) continue
+      var workspace = toplevel ? toplevel.workspace : null
+      if (!workspace) continue
+      var shown = workspace.id === window.activeWorkspaceId
+        || (window.specialWorkspaceName !== "" && workspace.name === window.specialWorkspaceName)
+      if (!shown) continue
       var ipc = toplevel.lastIpcObject
       if (ipc && (Number(ipc.fullscreen) & 2) !== 0) return true
     }
@@ -120,9 +133,17 @@ PanelWindow {
       }
     }
     if (rowModel.count > rows.length) rowModel.remove(rows.length, rowModel.count - rows.length)
+    // Bring the focused window into view when focus moves, not on every
+    // update, so a manual scroll is not undone by a title change.
     var focused = Model.focusedIndex(rows)
-    if (focused >= 0) Qt.callLater(function() { list.positionViewAtIndex(focused, ListView.Contain) })
+    var focusedKey = focused >= 0 ? rows[focused].key : ""
+    if (focusedKey !== window.lastFocusedKey) {
+      window.lastFocusedKey = focusedKey
+      if (focused >= 0) Qt.callLater(function() { list.positionViewAtIndex(focused, ListView.Contain) })
+    }
   }
+
+  property string lastFocusedKey: ""
 
   onRowsChanged: syncRows()
   Component.onCompleted: syncRows()
@@ -338,9 +359,13 @@ PanelWindow {
             asynchronous: true
             smooth: true
             mipmap: true
-            source: window.taskbar ? window.taskbar.iconSource(slot.appId) : ""
+            // A source that fails to load falls back to the generic icon,
+            // without breaking the binding, so a later icon change still shows.
+            readonly property string wanted: window.taskbar ? window.taskbar.iconSource(slot.appId) : ""
+            property string failed: ""
+            source: wanted !== "" && wanted === failed && window.taskbar ? window.taskbar.fallbackIcon : wanted
             opacity: slot.minimized ? 0.55 : 1
-            onStatusChanged: if (status === Image.Error && window.taskbar && source != window.taskbar.fallbackIcon) source = window.taskbar.fallbackIcon
+            onStatusChanged: if (status === Image.Error && String(source) === wanted) failed = wanted
           }
 
           // Focused window: underline. Urgent: the same mark in the urgent color.
@@ -437,7 +462,7 @@ PanelWindow {
 
     BorderSurface {
       id: tooltipBubble
-      implicitWidth: tooltipLabel.implicitWidth + 20
+      implicitWidth: tooltipLabel.width + 20
       implicitHeight: tooltipLabel.implicitHeight + 14
       color: Commons.Color.tooltip.background
       borderSpec: Border.surfaceSpec("tooltip", "border", Commons.Color.tooltip.border, 1)
