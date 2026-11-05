@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.slinn-01.taskbar",
+  "name": "Taskbar",
+  "version": "0.1.0",
+  "author": "slinn-01",
+  "license": "MIT",
+  "description": "A slim bottom taskbar that shows every open window, grouped by workspace. Click an icon to jump to it. Toggle with: omarchy-shell io.github.slinn-01.taskbar toggle",
+  "kinds": ["service"],
+  "entryPoints": { "service": "Service.qml" }
+}
